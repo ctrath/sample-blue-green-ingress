@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    color: green
+    draining: "true"
+
+    kubernetes.io/ingress.class: public-iks-k8s-nginx
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/affinity-mode: persistent
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      set $aa_cookie "ROUTEID=IKSE.green;Path=/;Max-Age=960";
+      if ($http_cookie ~* "ROUTEID=IKSE.blue") {
+        set $aa_cookie "ROUTEID=IKSE.blue;Path=/;Max-Age=960";
+        set $proxy_upstream_name "aacom-aacom-blue-secure-8443";
+        set $proxy_ssl_name "blue.aacom.cert";
+        set $location_path  "/blue";
+        proxy_pass https://upstream_balancer;
+        break;
+      }
+      add_header Set-Cookie $aa_cookie always;
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: 180s
+    nginx.ingress.kubernetes.io/server-snippets: |
+      location /release/ {
+          return 301 /;
+      }
+    nginx.ingress.kubernetes.io/session-cookie-change-on-failure: "false"
+    nginx.ingress.kubernetes.io/session-cookie-name: KROUTEID
+    nginx.ingress.kubernetes.io/session-cookie-path: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  generation: 8
+  name: blue-green-ingress
+spec:
+  rules:
+  - host: bluegreen.aa-ingress-blue-green-t-aa26ccd186043d00655b29246b83475c-0000.us-south.containers.appdomain.cloud
+    http:
+      paths:
+      - backend:
+          serviceName: green-service
+          servicePort: 80
+        path: /
+        pathType: ImplementationSpecific
+      - backend:
+          serviceName: blue-service
+          servicePort: 80
+        path: /blue
+        pathType: ImplementationSpecific

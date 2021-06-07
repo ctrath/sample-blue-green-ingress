@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blue-nginx
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: blue-nginx
+  template:
+    metadata:
+      labels:
+        app: blue-nginx
+    spec:
+      containers:
+      - name: blue-nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /etc/nginx
+          readOnly: true
+          name: nginx-conf
+        - mountPath: /var/log/nginx
+          name: log
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: blue-nginx-conf
+          items:
+            - key: nginx.conf
+              path: nginx.conf
+      - name: log
+        emptyDir: {}

@@ -1,0 +1,1 @@
+# sample-blue-green-ingress
